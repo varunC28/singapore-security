@@ -109,25 +109,36 @@ export default function EnquiriesPage() {
                         {formatDate(enquiry.created_at)}
                       </div>
                       <div className="font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                        {enquiry.items.length} items • {formatPrice(enquiry.total)}
+                        {enquiry.items.length} items • {formatPrice(enquiry.total_value)}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-0 border-gray-100">
-                    <select
-                      value={enquiry.status}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        updateStatus(enquiry.id, e.target.value as any);
-                      }}
-                      onClick={e => e.stopPropagation()}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#3b82f6] outline-none bg-white flex-1 sm:flex-none"
-                    >
-                      <option value="new">New</option>
-                      <option value="contacted">Contacted</option>
-                      <option value="closed">Closed</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={enquiry.status}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          updateStatus(enquiry.id, e.target.value as any);
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        className={`appearance-none border rounded-lg pl-4 pr-8 py-1.5 text-sm font-semibold cursor-pointer outline-none transition-all shadow-sm ${
+                          enquiry.status === 'new' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-2 focus:ring-blue-500/20' :
+                          enquiry.status === 'contacted' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 focus:ring-2 focus:ring-yellow-500/20' :
+                          'bg-green-50 text-green-700 border-green-200 focus:ring-2 focus:ring-green-500/20'
+                        }`}
+                      >
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                      <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+                          enquiry.status === 'new' ? 'text-blue-500' :
+                          enquiry.status === 'contacted' ? 'text-yellow-600' :
+                          'text-green-600'
+                      }`} />
+                    </div>
                     
                     <button className="text-gray-400 hover:text-gray-600 p-1">
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}

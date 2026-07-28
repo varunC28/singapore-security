@@ -55,8 +55,8 @@ export interface Enquiry {
   customer_name: string;
   phone: string;
   items: EnquiryItem[];
-  total: number;
-  status: 'new' | 'contacted' | 'closed';
+  total_value: number;
+  status: 'new' | 'contacted' | 'closed' | 'pending';
   created_at: string;
 }
 

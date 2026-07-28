@@ -35,6 +35,11 @@
   box-sizing: border-box;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
@@ -46,8 +51,7 @@ body {
   font-size: 16px;
   line-height: 1.6;
   color: #0a0a0a;
-  background-color: #ffffff;
-  overflow-x: hidden;
+  background-color: #000000;
 }
 
 /* Prevent iOS auto-zoom on input focus (require 16px min font) */
@@ -168,16 +172,16 @@ input, select, textarea {
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* ============================================================
