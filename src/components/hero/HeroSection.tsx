@@ -44,8 +44,7 @@ export default function HeroSection() {
   const [useWebGL, setUseWebGL] = useState(true);
   const [dprCap] = useState(getDPRCap);
 
-  // Scroll-driven animation values
-  const [cameraScale, setCameraScale] = useState(0.9);
+  const [animationProgress, setAnimationProgress] = useState(0);
   const [emissiveIntensity, setEmissiveIntensity] = useState(0);
   const [pointLightIntensity, setPointLightIntensity] = useState(0);
 
@@ -91,8 +90,7 @@ export default function HeroSection() {
           duration: 0.5,
           onUpdate: function () {
             const progress = this.progress();
-            // Scale from 0.9 to 1.9
-            setCameraScale(0.9 + progress * 1.0);
+            setAnimationProgress(progress);
           },
         }
       );
@@ -140,13 +138,17 @@ export default function HeroSection() {
     return () => ctx.revert();
   }, [getScrubDistance]);
 
+  const cameraScale = isMobile 
+    ? 1.4 + animationProgress * 0.2  // Mobile: 1.4 -> 1.6
+    : 0.9 + animationProgress * 1.0; // Desktop: 0.9 -> 1.9
+
   return (
     <section
       ref={sectionRef}
       className="relative min-h-screen bg-black overflow-hidden"
     >
       {/* 3D Canvas or Fallback */}
-      <div className="absolute inset-0 z-0 top-[40%] md:top-0 md:left-[40%]">
+      <div className="absolute inset-0 z-0 top-[50%] md:top-0 md:left-[40%]">
         {useWebGL ? (
           <Suspense
             fallback={
@@ -198,7 +200,7 @@ export default function HeroSection() {
 
               <CameraModel
                 emissiveIntensity={emissiveIntensity}
-                scale={isMobile ? cameraScale * 0.55 : cameraScale}
+                scale={cameraScale}
               />
 
               <Environment preset="city" />
@@ -212,7 +214,7 @@ export default function HeroSection() {
       {/* Text overlay */}
       <div
         ref={textRef}
-        className="relative z-10 flex flex-col justify-start md:justify-center pt-[10vh] md:pt-0 min-h-screen px-6 md:px-12 lg:px-24 md:w-[60%] pointer-events-none"
+        className="relative z-10 flex flex-col justify-start md:justify-center pt-[13vh] md:pt-0 min-h-screen px-6 md:px-12 lg:px-24 md:w-[60%] pointer-events-none"
       >
         <div className="max-w-2xl text-left">
           {/* Label */}
