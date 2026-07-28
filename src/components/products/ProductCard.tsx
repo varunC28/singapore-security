@@ -6,16 +6,16 @@ import QuantityStepper from './QuantityStepper';
 
 interface ProductCardProps {
   product: Product;
+  onClick?: () => void;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, onClick }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
-  const getItemQuantity = useCartStore((state) => state.getItemQuantity);
-  
-  const quantity = getItemQuantity(product.id);
+  const quantity = useCartStore((state) => state.items.find(i => i.product_id === product.id)?.quantity || 0);
   const inCart = quantity > 0;
   
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (product.in_stock) {
       addItem({
         product_id: product.id,
@@ -28,10 +28,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <motion.div
+      onClick={onClick}
       whileHover={{ y: -4 }}
-      className={`bg-dark rounded-2xl overflow-hidden product-card flex flex-col ${!product.in_stock ? 'opacity-60' : ''}`}
+      className={`bg-dark rounded-2xl overflow-hidden product-card flex flex-col ${onClick ? 'cursor-pointer' : ''} ${!product.in_stock ? 'opacity-60' : ''}`}
     >
-      <div className="aspect-square bg-dark-200 flex items-center justify-center p-4">
+      <div className="aspect-square bg-white p-6 relative w-full">
         {product.image_url ? (
           <img 
             src={product.image_url} 
@@ -51,16 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h3>
         
-        {product.specs && product.specs.length > 0 && (
-          <p className="text-white/50 text-xs truncate mb-3">
-            {product.specs.slice(0, 3).map((spec, i) => (
-              <span key={i}>
-                {i > 0 && ' • '}
-                {spec.label}: {spec.value}
-              </span>
-            ))}
-          </p>
-        )}
+
         
         <div className="mt-auto">
           <p className="text-white font-bold text-lg mb-4">
@@ -76,7 +68,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                 Currently Unavailable
               </button>
             ) : inCart ? (
-              <QuantityStepper productId={product.id} quantity={quantity} />
+              <div onClick={e => e.stopPropagation()} className="h-full w-full">
+                <QuantityStepper productId={product.id} quantity={quantity} />
+              </div>
             ) : (
               <button 
                 onClick={handleAddToCart}

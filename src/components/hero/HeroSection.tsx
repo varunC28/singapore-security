@@ -91,8 +91,8 @@ export default function HeroSection() {
           duration: 0.5,
           onUpdate: function () {
             const progress = this.progress();
-            // Scale from 0.9 to 2.2
-            setCameraScale(0.9 + progress * 1.3);
+            // Scale from 0.9 to 1.9
+            setCameraScale(0.9 + progress * 1.0);
           },
         }
       );

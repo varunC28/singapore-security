@@ -6,6 +6,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  sort_order: number;
   created_at: string;
 }
 
@@ -14,12 +15,17 @@ export interface ProductSpec {
   value: string;
 }
 
+export interface ProductSpecGroup {
+  group: string;
+  items: ProductSpec[];
+}
+
 export interface Product {
   id: string;
   category_id: string;
   name: string;
   description: string | null;
-  specs: ProductSpec[];
+  specs: ProductSpecGroup[];
   price: number;
   image_url: string | null;
   in_stock: boolean;

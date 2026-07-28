@@ -23,7 +23,8 @@ export function useCategories() {
       const { data, error: fetchError } = await supabase
         .from('categories')
         .select('*')
-        .order('name');
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
 
       if (fetchError) throw fetchError;
       setCategories((data as Category[]) ?? []);

@@ -4,6 +4,7 @@ import type { Product, Category } from '@/types';
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import ProductForm from './ProductForm';
 import { formatPrice } from '@/lib/constants';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 type ProductWithCategory = Product & { category: Category | null };
 
@@ -22,7 +23,7 @@ export default function ProductsPage() {
     try {
       const [productsRes, categoriesRes] = await Promise.all([
         supabase.from('products').select('*, category:categories(id, name, slug)').order('created_at', { ascending: false }),
-        supabase.from('categories').select('*').order('name')
+        supabase.from('categories').select('*').order('sort_order', { ascending: true }).order('name')
       ]);
 
       if (productsRes.data) setProducts(productsRes.data as unknown as ProductWithCategory[]);
@@ -89,16 +90,16 @@ export default function ProductsPage() {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#3b82f6] outline-none"
           />
         </div>
-        <select
+        <CustomSelect
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3b82f6] outline-none bg-white"
-        >
-          <option value="">All Categories</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
+          onChange={setSelectedCategory}
+          placeholder="All Categories"
+          className="w-48 shrink-0"
+          options={[
+            { value: '', label: 'All Categories' },
+            ...categories.map(c => ({ value: c.id, label: c.name }))
+          ]}
+        />
       </div>
 
       {loading ? (

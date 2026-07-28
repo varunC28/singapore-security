@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Product, Category, ProductSpec } from '@/types';
+import type { Product, Category, ProductSpec, ProductSpecGroup } from '@/types';
 import { X, Plus, Upload } from 'lucide-react';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 interface ProductFormProps {
   product?: Product;
@@ -17,13 +18,18 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
   const [price, setPrice] = useState(product?.price?.toString() || '');
   const [description, setDescription] = useState(product?.description || '');
   const [inStock, setInStock] = useState(product?.in_stock ?? true);
-  const [specs, setSpecs] = useState<ProductSpec[]>(product?.specs || []);
+  const [specs, setSpecs] = useState<ProductSpecGroup[]>(
+    product?.specs?.length ? product.specs : [{ group: 'General', items: [] }]
+  );
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(product?.image_url || '');
   
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  
+  const [smartPasteGroupId, setSmartPasteGroupId] = useState<number | null>(null);
+  const [smartPasteText, setSmartPasteText] = useState('');
   
   const [loading, setLoading] = useState(false);
 
@@ -43,12 +49,73 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
     }
   };
 
-  const addSpec = () => setSpecs([...specs, { label: '', value: '' }]);
-  const removeSpec = (index: number) => setSpecs(specs.filter((_, i) => i !== index));
-  const updateSpec = (index: number, field: keyof ProductSpec, val: string) => {
+  const addGroup = () => setSpecs([...specs, { group: 'New Group', items: [] }]);
+  const updateGroup = (gIndex: number, newName: string) => {
     const newSpecs = [...specs];
-    newSpecs[index][field] = val;
+    newSpecs[gIndex].group = newName;
     setSpecs(newSpecs);
+  };
+  const removeGroup = (gIndex: number) => setSpecs(specs.filter((_, i) => i !== gIndex));
+
+  const addSpec = (gIndex: number) => {
+    const newSpecs = [...specs];
+    newSpecs[gIndex].items.push({ label: '', value: '' });
+    setSpecs(newSpecs);
+  };
+  const removeSpec = (gIndex: number, sIndex: number) => {
+    const newSpecs = [...specs];
+    newSpecs[gIndex].items = newSpecs[gIndex].items.filter((_, i) => i !== sIndex);
+    setSpecs(newSpecs);
+  };
+  const updateSpec = (gIndex: number, sIndex: number, field: keyof ProductSpec, val: string) => {
+    const newSpecs = [...specs];
+    newSpecs[gIndex].items[sIndex][field] = val;
+    setSpecs(newSpecs);
+  };
+
+  const handleSmartPaste = () => {
+    if (!smartPasteText.trim() || smartPasteGroupId === null) return;
+
+    const lines = smartPasteText.split('\n');
+    const parsedSpecs: ProductSpec[] = [];
+
+    for (const line of lines) {
+      const cleanLine = line.trim().replace(/^[-•*]\s*/, '');
+      if (!cleanLine) continue;
+
+      let label = '';
+      let value = '';
+
+      if (cleanLine.includes('\t')) {
+        const parts = cleanLine.split('\t').filter(p => p.trim());
+        if (parts.length >= 2) {
+          label = parts[0].trim();
+          value = parts.slice(1).join(' ').trim();
+        }
+      } else if (cleanLine.includes(':')) {
+        const idx = cleanLine.indexOf(':');
+        label = cleanLine.substring(0, idx).trim();
+        value = cleanLine.substring(idx + 1).trim();
+      } else if (cleanLine.includes('-')) {
+        const idx = cleanLine.indexOf('-');
+        label = cleanLine.substring(0, idx).trim();
+        value = cleanLine.substring(idx + 1).trim();
+      }
+
+      if (label && value) {
+        label = label.replace(/:$/, '').trim();
+        parsedSpecs.push({ label, value });
+      }
+    }
+
+    if (parsedSpecs.length > 0) {
+      const newSpecs = [...specs];
+      newSpecs[smartPasteGroupId].items.push(...parsedSpecs);
+      setSpecs(newSpecs);
+    }
+    
+    setSmartPasteText('');
+    setSmartPasteGroupId(null);
   };
 
   const handleCreateCategory = async () => {
@@ -97,7 +164,13 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
         description,
         in_stock: inStock,
         image_url: imageUrl,
-        specs: specs.filter(s => s.label && s.value)
+        specs: specs
+          .filter(g => g.group.trim() !== '')
+          .map(g => ({
+            group: g.group,
+            items: g.items.filter(s => s.label.trim() && s.value.trim())
+          }))
+          .filter(g => g.items.length > 0)
       };
 
       if (product?.id) {
@@ -145,11 +218,15 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
             {!isAddingCategory ? (
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3b82f6] outline-none bg-white">
-                <option value="">Select a category</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                <option value="ADD_NEW" className="font-semibold text-[#3b82f6]">+ Add New Category</option>
-              </select>
+              <CustomSelect 
+                value={categoryId} 
+                onChange={setCategoryId} 
+                placeholder="Select a category"
+                options={[
+                  ...categories.map(c => ({ value: c.id, label: c.name })),
+                  { value: 'ADD_NEW', label: '+ Add New Category', className: 'font-semibold text-[#3b82f6] border-t border-gray-50 mt-1' }
+                ]}
+              />
             ) : (
               <div className="flex gap-2">
                 <input type="text" placeholder="New category name" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3b82f6] outline-none" />
@@ -183,23 +260,72 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700">Specifications</label>
-              <button type="button" onClick={addSpec} className="text-sm text-[#3b82f6] font-medium flex items-center gap-1 hover:underline">
-                <Plus size={16} /> Add Spec
+            <div className="flex justify-between items-center mb-4">
+              <label className="block text-sm font-medium text-gray-700">Specifications (Grouped)</label>
+              <button type="button" onClick={addGroup} className="text-sm text-[#3b82f6] font-medium flex items-center gap-1 hover:underline">
+                <Plus size={16} /> Add Group
               </button>
             </div>
-            <div className="space-y-3">
-              {specs.map((spec, i) => (
-                <div key={i} className="flex gap-3">
-                  <input type="text" placeholder="e.g. Resolution" value={spec.label} onChange={e => updateSpec(i, 'label', e.target.value)} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#3b82f6]" />
-                  <input type="text" placeholder="e.g. 1080p" value={spec.value} onChange={e => updateSpec(i, 'value', e.target.value)} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#3b82f6]" />
-                  <button type="button" onClick={() => removeSpec(i)} className="text-gray-400 hover:text-red-500 p-2">
-                    <X size={20} />
-                  </button>
+            
+            <div className="space-y-6">
+              {specs.map((group, gIndex) => (
+                <div key={gIndex} className="border border-gray-200 rounded-xl p-4 bg-gray-50/50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <input 
+                      type="text" 
+                      value={group.group} 
+                      onChange={(e) => updateGroup(gIndex, e.target.value)}
+                      placeholder="e.g. Video Quality"
+                      className="font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-[#3b82f6] outline-none px-1 py-1 flex-1"
+                    />
+                    <button type="button" onClick={() => setSmartPasteGroupId(smartPasteGroupId === gIndex ? null : gIndex)} className={`text-sm font-medium flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${smartPasteGroupId === gIndex ? 'bg-purple-100 text-purple-700' : 'text-purple-600 hover:bg-purple-50'}`}>
+                      <span className="font-mono bg-purple-200 px-1 rounded text-[10px] leading-tight py-0.5 mr-1">AI</span> 
+                      {smartPasteGroupId === gIndex ? 'Close Smart Paste' : 'Smart Paste'}
+                    </button>
+                    <button type="button" onClick={() => removeGroup(gIndex)} className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50">
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {smartPasteGroupId === gIndex && (
+                    <div className="mb-4 bg-purple-50 p-4 rounded-xl border border-purple-100 shadow-inner">
+                      <label className="block text-xs font-semibold text-purple-800 uppercase tracking-wider mb-2">
+                        Paste raw text for "{group.group}"
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={smartPasteText}
+                        onChange={(e) => setSmartPasteText(e.target.value)}
+                        placeholder="Resolution: 1080p&#10;Night Vision: Yes"
+                        className="w-full border border-purple-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-400 outline-none resize-none bg-white mb-3 shadow-sm"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => setSmartPasteGroupId(null)} className="px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-200 rounded-md transition-colors">Cancel</button>
+                        <button type="button" onClick={handleSmartPaste} className="px-3 py-1.5 text-sm bg-purple-600 text-white font-medium hover:bg-purple-700 rounded-md shadow-sm transition-colors">Parse & Add</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {group.items.map((spec, sIndex) => (
+                      <div key={sIndex} className="flex gap-3">
+                        <input type="text" placeholder="e.g. Resolution" value={spec.label} onChange={e => updateSpec(gIndex, sIndex, 'label', e.target.value)} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#3b82f6] shadow-sm" />
+                        <input type="text" placeholder="e.g. 1080p" value={spec.value} onChange={e => updateSpec(gIndex, sIndex, 'value', e.target.value)} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#3b82f6] shadow-sm" />
+                        <button type="button" onClick={() => removeSpec(gIndex, sIndex)} className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50">
+                          <X size={20} />
+                        </button>
+                      </div>
+                    ))}
+                    <div className="pt-2">
+                      <button type="button" onClick={() => addSpec(gIndex)} className="text-sm text-[#3b82f6] font-medium flex items-center gap-1 hover:underline">
+                        <Plus size={16} /> Add Spec to {group.group || 'Group'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
-              {specs.length === 0 && <p className="text-sm text-gray-500 italic">No specifications added.</p>}
+              
+              {specs.length === 0 && <p className="text-sm text-gray-500 italic text-center py-4">No specification groups added.</p>}
             </div>
           </div>
 

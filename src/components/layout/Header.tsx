@@ -5,7 +5,7 @@ import { useCartStore } from '@/stores/cartStore';
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
-  const totalItems = useCartStore((state) => state.totalItems());
+  const totalItems = useCartStore((state) => state.items.reduce((sum, item) => sum + item.quantity, 0));
   const toggleCart = useCartStore((state) => state.toggleCart);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
