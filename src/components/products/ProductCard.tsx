@@ -55,9 +55,21 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
 
         
         <div className="mt-auto">
-          <p className="text-white font-bold text-lg mb-4">
-            {formatPrice(product.price)}
-          </p>
+          {product.mrp && product.mrp > product.price ? (
+            <div className="mb-4">
+              <div className="flex items-end gap-2 mb-0.5">
+                <span className="text-red-500 font-semibold text-lg leading-none">-{Math.round(((product.mrp - product.price) / product.mrp) * 100)}%</span>
+                <span className="text-white font-bold text-xl leading-none">{formatPrice(product.price)}</span>
+              </div>
+              <div className="text-gray-400 text-xs">
+                M.R.P.: <span className="line-through">{formatPrice(product.mrp)}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-white font-bold text-xl mb-4">
+              {formatPrice(product.price)}
+            </p>
+          )}
           
           <div className="h-[44px]">
             {!product.in_stock ? (

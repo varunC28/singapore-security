@@ -16,6 +16,7 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
   const [name, setName] = useState(product?.name || '');
   const [categoryId, setCategoryId] = useState(product?.category_id || '');
   const [price, setPrice] = useState(product?.price?.toString() || '');
+  const [mrp, setMrp] = useState(product?.mrp?.toString() || '');
   const [description, setDescription] = useState(product?.description || '');
   const [inStock, setInStock] = useState(product?.in_stock ?? true);
   const [specs, setSpecs] = useState<ProductSpecGroup[]>(
@@ -161,6 +162,7 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
         name,
         category_id: categoryId || null,
         price: parseFloat(price),
+        mrp: mrp ? parseFloat(mrp) : null,
         description,
         in_stock: inStock,
         image_url: imageUrl,
@@ -203,7 +205,7 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
         </div>
         
         <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
               <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3b82f6] outline-none" />
@@ -212,6 +214,11 @@ export default function ProductForm({ product, categories, isOpen, onClose, onSa
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
               <input required type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3b82f6] outline-none" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">M.R.P. (Optional)</label>
+              <input type="number" min="0" step="0.01" value={mrp} onChange={e => setMrp(e.target.value)} className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3b82f6] outline-none" placeholder="Original price" />
             </div>
           </div>
 

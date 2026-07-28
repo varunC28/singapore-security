@@ -108,8 +108,25 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
             <h2 className="text-2xl font-bold text-gray-900 leading-tight">
               {product.name}
             </h2>
-            <div className="text-3xl font-extrabold text-gray-900">
-              {formatPrice(product.price)}
+            <div>
+              {product.mrp && product.mrp > product.price ? (
+                <div className="mb-2">
+                  <div className="flex items-end gap-3 mb-1">
+                    <span className="text-red-600 font-semibold text-3xl leading-none">-{Math.round(((product.mrp - product.price) / product.mrp) * 100)}%</span>
+                    <span className="text-gray-900 font-extrabold text-4xl leading-none">{formatPrice(product.price)}</span>
+                  </div>
+                  <div className="text-gray-600 font-medium text-sm">
+                    M.R.P.: <span className="line-through">{formatPrice(product.mrp)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-3xl font-extrabold text-gray-900 mb-2">
+                  {formatPrice(product.price)}
+                </div>
+              )}
+              <div className="text-sm font-semibold text-gray-800">
+                Inclusive of all taxes
+              </div>
             </div>
 
             <div className="h-[48px] mt-4">

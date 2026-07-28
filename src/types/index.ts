@@ -27,6 +27,7 @@ export interface Product {
   description: string | null;
   specs: ProductSpecGroup[];
   price: number;
+  mrp?: number | null;
   image_url: string | null;
   in_stock: boolean;
   created_at: string;
