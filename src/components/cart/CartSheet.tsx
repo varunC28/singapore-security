@@ -92,14 +92,23 @@ export const CartSheet: React.FC = () => {
               >
                 Send Enquiry
               </button>
-              <a 
-                href="https://wa.me/919424066666"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-center text-sm text-gray-500 hover:text-dark transition-colors mt-3"
-              >
-                Or enquire via WhatsApp
-              </a>
+              
+              {(() => {
+                const messageText = items.length > 0 
+                  ? `Hello! I would like to order the following items:\n${items.map(item => `- ${item.name} (Qty: ${item.quantity})`).join('\n')}\n\nPlease connect with me!`
+                  : `Hello, I have an enquiry.`;
+                
+                return (
+                  <a 
+                    href={`https://wa.me/919424066666?text=${encodeURIComponent(messageText)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center text-sm text-gray-500 hover:text-dark transition-colors mt-3"
+                  >
+                    Or enquire via WhatsApp
+                  </a>
+                );
+              })()}
             </div>
           </motion.div>
         </>
