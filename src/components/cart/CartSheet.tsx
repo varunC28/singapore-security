@@ -85,27 +85,22 @@ export const CartSheet: React.FC = () => {
                 <span className="text-lg font-bold text-dark">Subtotal</span>
                 <span className="text-lg font-bold text-dark">{formatPrice(totalPrice)}</span>
               </div>
-              <button 
-                disabled={items.length === 0}
-                className="btn-accent w-full"
-                onClick={() => setIsEnquiryModalOpen(true)}
-              >
-                Send Enquiry
-              </button>
-              
               {(() => {
                 const messageText = items.length > 0 
-                  ? `Hello! I would like to order the following items:\n${items.map(item => `- ${item.name} (Qty: ${item.quantity})`).join('\n')}\n\nPlease connect with me!`
+                  ? `Hello! I would like to order the following items:\n${items.map(item => `⁃ ${item.name} (Qty: ${item.quantity})`).join('\n')}\n\nPlease connect with me!`
                   : `Hello, I have an enquiry.`;
                 
                 return (
                   <a 
-                    href={`https://wa.me/919424066666?text=${encodeURIComponent(messageText)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-center text-sm text-gray-500 hover:text-dark transition-colors mt-3"
+                    href={items.length === 0 ? '#' : `https://wa.me/919424066666?text=${encodeURIComponent(messageText)}`}
+                    target={items.length === 0 ? '_self' : '_blank'}
+                    rel={items.length === 0 ? '' : 'noopener noreferrer'}
+                    className={`btn-accent w-full text-center flex items-center justify-center ${items.length === 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                    onClick={(e) => {
+                      if (items.length === 0) e.preventDefault();
+                    }}
                   >
-                    Or enquire via WhatsApp
+                    Send Enquiry On WhatsApp
                   </a>
                 );
               })()}
@@ -113,7 +108,6 @@ export const CartSheet: React.FC = () => {
           </motion.div>
         </>
       )}
-      <EnquiryModal isOpen={isEnquiryModalOpen} onClose={() => setIsEnquiryModalOpen(false)} />
     </AnimatePresence>
   );
 };
