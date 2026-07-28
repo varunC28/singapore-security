@@ -4,7 +4,6 @@ import { useCartStore } from '@/stores/cartStore';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { CartItem } from './CartItem';
 import { formatPrice } from '@/lib/constants';
-import EnquiryModal from '@/components/enquiry/EnquiryModal';
 
 export const CartSheet: React.FC = () => {
   const items = useCartStore((state) => state.items);
@@ -13,7 +12,6 @@ export const CartSheet: React.FC = () => {
   const totalItems = useCartStore((state) => state.totalItems());
   const totalPrice = useCartStore((state) => state.totalPrice());
   const isDesktop = useIsDesktop();
-  const [isEnquiryModalOpen, setIsEnquiryModalOpen] = React.useState(false);
 
   return (
     <AnimatePresence>
