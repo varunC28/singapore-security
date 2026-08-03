@@ -63,31 +63,11 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
     }
   };
 
-  // Prevent background scrolling when modal is open (with strict iOS Safari fix)
+  // Prevent background scrolling when modal is open
   useEffect(() => {
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
-
     return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
       document.body.style.overflow = '';
-      
-      // Disable smooth scroll temporarily to prevent animated jump
-      const html = document.documentElement;
-      const originalScrollBehavior = html.style.scrollBehavior;
-      html.style.scrollBehavior = 'auto';
-      
-      window.scrollTo({ top: scrollY, left: 0, behavior: 'instant' });
-      
-      // Restore original behavior after the instant jump
-      requestAnimationFrame(() => {
-        html.style.scrollBehavior = originalScrollBehavior;
-      });
     };
   }, []);
 
