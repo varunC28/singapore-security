@@ -97,7 +97,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
             onClose();
           }
         }}
-        className="absolute inset-0 sm:relative bg-white sm:rounded-2xl shadow-2xl w-full sm:max-w-4xl sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col z-10"
+        className="relative bg-white sm:rounded-2xl shadow-2xl w-full h-full sm:max-w-4xl sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col z-10"
       >
         {/* Mobile Drag Handle (Fixed at top of shell) */}
         <div 
