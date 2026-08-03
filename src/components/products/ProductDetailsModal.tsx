@@ -86,10 +86,18 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row z-10"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
       >
+        {/* Floating Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur shadow-md hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-900 transition-all border border-gray-200"
+        >
+          <X size={20} />
+        </button>
+
         {/* Left Side: Image */}
-        <div className="w-full md:w-2/5 bg-gray-50 flex flex-col p-8 border-r border-gray-100">
+        <div className="w-full md:w-2/5 bg-gray-50 flex flex-col p-8 border-r border-gray-100 shrink-0">
           <div className="aspect-square w-full relative mb-6">
             {product.image_url ? (
               <img
@@ -105,7 +113,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
           </div>
 
           <div className="mt-auto space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+            <h2 className="text-2xl font-bold text-gray-900 leading-tight pr-8 md:pr-0">
               {product.name}
             </h2>
             <div>
@@ -154,16 +162,10 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         </div>
 
         {/* Right Side: Details Accordion */}
-        <div className="w-full md:w-3/5 overflow-y-auto bg-white flex flex-col">
-          <div className="p-6 flex-1">
+        <div className="w-full md:w-3/5 md:overflow-y-auto bg-white flex flex-col">
+          <div className="p-6 flex-1 pt-12 md:pt-6">
             <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
               <h3 className="text-lg font-bold text-gray-900">Product information</h3>
-              <button
-                onClick={onClose}
-                className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-800 transition-colors shadow-sm border border-gray-200"
-              >
-                <X size={20} />
-              </button>
             </div>
 
             <div className="border border-gray-200 rounded-xl overflow-hidden">
