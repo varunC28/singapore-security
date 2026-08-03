@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import StorefrontPage from './pages/StorefrontPage';
+import ProductDetailsPage from './pages/ProductDetailsPage';
 
 // Code-split admin — public visitors never download admin bundle
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
@@ -10,6 +11,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<StorefrontPage />} />
+        <Route path="/product/:id" element={<ProductDetailsPage />} />
         <Route
           path="/admin/*"
           element={

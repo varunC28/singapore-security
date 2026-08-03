@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import ProductCard from './ProductCard';
@@ -6,14 +7,16 @@ import ProductSkeleton from './ProductSkeleton';
 import ProductDetailsModal from './ProductDetailsModal';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
+import { useUIStore } from '@/stores/uiStore';
 
-function CategoryAccordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+function CategoryAccordion({ id, title, children, defaultOpen = false }: { id: string; title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const isOpen = useUIStore(state => state.openCategories[id] ?? defaultOpen);
+  const toggleCategory = useUIStore(state => state.toggleCategory);
 
   return (
     <div className="mb-6">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => toggleCategory(id, defaultOpen)}
         className="w-full flex justify-between items-center py-4 bg-transparent transition-colors text-left"
       >
         <div>
@@ -46,8 +49,17 @@ function CategoryAccordion({ title, children, defaultOpen = false }: { title: st
 
 export default function ProductsSection() {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const navigate = useNavigate();
   const { categories } = useCategories();
   const { products, loading } = useProducts();
+
+  const handleProductClick = (product: any) => {
+    if (window.innerWidth < 768) {
+      navigate(`/product/${product.id}`);
+    } else {
+      setSelectedProduct(product);
+    }
+  };
 
   const productsByCategory = useMemo(() => {
     const grouped: Record<string, typeof products> = {};
@@ -87,7 +99,7 @@ export default function ProductsSection() {
               const categoryProducts = productsByCategory.grouped[category.id] || [];
 
               return (
-                <CategoryAccordion key={category.id} title={category.name} defaultOpen={index === 0}>
+                <CategoryAccordion key={category.id} id={category.id} title={category.name} defaultOpen={index === 0}>
                   {categoryProducts.length > 0 ? (
                     <div 
                       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
@@ -101,7 +113,7 @@ export default function ProductsSection() {
                           exit={{ opacity: 0, scale: 0.9 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <ProductCard product={product} onClick={() => setSelectedProduct(product)} />
+                          <ProductCard product={product} onClick={() => handleProductClick(product)} />
                         </motion.div>
                       ))}
                     </div>
@@ -115,10 +127,10 @@ export default function ProductsSection() {
             })}
 
             {productsByCategory.uncategorized.length > 0 && (
-              <CategoryAccordion title="Other Products" defaultOpen={categories.length === 0}>
+              <CategoryAccordion id="uncategorized" title="Other Products" defaultOpen={categories.length === 0}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   {productsByCategory.uncategorized.map((product) => (
-                    <ProductCard key={product.id} product={product} onClick={() => setSelectedProduct(product)} />
+                    <ProductCard key={product.id} product={product} onClick={() => handleProductClick(product)} />
                   ))}
                 </div>
               </CategoryAccordion>
