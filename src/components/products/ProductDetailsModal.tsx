@@ -76,7 +76,18 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
       document.body.style.top = '';
       document.body.style.width = '';
       document.body.style.overflow = '';
-      window.scrollTo(0, scrollY);
+      
+      // Disable smooth scroll temporarily to prevent animated jump
+      const html = document.documentElement;
+      const originalScrollBehavior = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto';
+      
+      window.scrollTo({ top: scrollY, left: 0, behavior: 'instant' });
+      
+      // Restore original behavior after the instant jump
+      requestAnimationFrame(() => {
+        html.style.scrollBehavior = originalScrollBehavior;
+      });
     };
   }, []);
 
