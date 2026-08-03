@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Product, Category } from '@/types';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, GripVertical } from 'lucide-react';
 import ProductForm from './ProductForm';
 import { formatPrice } from '@/lib/constants';
 import CustomSelect from '@/components/ui/CustomSelect';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 type ProductWithCategory = Product & { category: Category | null };
 
@@ -22,7 +23,7 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const [productsRes, categoriesRes] = await Promise.all([
-        supabase.from('products').select('*, category:categories(id, name, slug)').order('created_at', { ascending: false }),
+        supabase.from('products').select('*, category:categories(id, name, slug)').order('sort_order', { ascending: true }).order('created_at', { ascending: false }),
         supabase.from('categories').select('*').order('sort_order', { ascending: true }).order('name')
       ]);
 
@@ -60,11 +61,54 @@ export default function ProductsPage() {
     setIsFormOpen(true);
   };
 
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = [...products].filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory ? p.category_id === selectedCategory : true;
     return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    if (a.sort_order !== b.sort_order) return (a.sort_order || 0) - (b.sort_order || 0);
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
+    if (!selectedCategory) return; // Only allow drag and drop if a specific category is selected
+
+    const items = Array.from(filteredProducts);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Optimistic UI update
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      sort_order: index
+    }));
+    
+    // Update local state by merging back the filtered products
+    setProducts(prev => {
+      const newProducts = [...prev];
+      updatedItems.forEach(updatedItem => {
+        const index = newProducts.findIndex(p => p.id === updatedItem.id);
+        if (index !== -1) newProducts[index] = updatedItem;
+      });
+      return newProducts;
+    });
+
+    try {
+      await Promise.all(
+        updatedItems.map((item) =>
+          supabase
+            .from('products')
+            .update({ sort_order: item.sort_order })
+            .eq('id', item.id)
+        )
+      );
+    } catch (error) {
+      console.error('Error updating order', error);
+      fetchData(); // Revert on failure
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -102,96 +146,93 @@ export default function ProductsPage() {
         />
       </div>
 
+      {selectedCategory === '' && search === '' && products.length > 0 && (
+        <div className="text-sm text-gray-500 bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center gap-2">
+          <GripVertical size={16} className="text-blue-400" />
+          Tip: Select a specific category above to enable drag-and-drop ordering.
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-12 text-gray-500">Loading...</div>
       ) : filteredProducts.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-          <p className="text-gray-500">No products found. Add your first product!</p>
+          <p className="text-gray-500">No products found.</p>
         </div>
       ) : (
-        <>
-          {/* Desktop Table */}
-          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-600 text-sm">
-                  <th className="py-3 px-4 font-medium">Image</th>
-                  <th className="py-3 px-4 font-medium">Name</th>
-                  <th className="py-3 px-4 font-medium">Category</th>
-                  <th className="py-3 px-4 font-medium">Price</th>
-                  <th className="py-3 px-4 font-medium">Stock</th>
-                  <th className="py-3 px-4 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredProducts.map(product => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4">
-                      {product.image_url ? (
-                        <img src={product.image_url} alt={product.name} className="w-12 h-12 object-cover rounded-md border border-gray-200" />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-400">No Img</div>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 font-medium text-gray-900">{product.name}</td>
-                    <td className="py-3 px-4 text-gray-600">{product.category?.name || '-'}</td>
-                    <td className="py-3 px-4 text-gray-900">{formatPrice(product.price)}</td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {product.in_stock ? 'In Stock' : 'Out of Stock'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleEdit(product)} className="p-2 text-gray-400 hover:text-[#3b82f6] rounded-lg hover:bg-blue-50 transition-colors">
-                          <Edit2 size={18} />
-                        </button>
-                        <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors">
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="products-list" isDropDisabled={selectedCategory === ''}>
+            {(provided) => (
+              <div 
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+              >
+                <ul className="divide-y divide-gray-100">
+                  {filteredProducts.map((product, index) => (
+                    <Draggable 
+                      key={product.id} 
+                      draggableId={product.id} 
+                      index={index}
+                      isDragDisabled={selectedCategory === ''}
+                    >
+                      {(provided, snapshot) => (
+                        <li 
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`p-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50 transition-colors bg-white ${snapshot.isDragging ? 'shadow-lg border border-blue-100 z-50' : ''}`}
+                          style={provided.draggableProps.style}
+                        >
+                          <div className="flex items-center gap-4 flex-1">
+                            {selectedCategory !== '' && (
+                              <div 
+                                {...provided.dragHandleProps} 
+                                className="text-gray-400 hover:text-gray-900 cursor-grab active:cursor-grabbing p-1.5 hover:bg-gray-100 rounded-md transition-colors shrink-0"
+                              >
+                                <GripVertical size={20} />
+                              </div>
+                            )}
+                            
+                            {product.image_url ? (
+                              <img src={product.image_url} alt={product.name} className="w-16 h-16 sm:w-12 sm:h-12 object-cover rounded-md border border-gray-200 shrink-0" />
+                            ) : (
+                              <div className="w-16 h-16 sm:w-12 sm:h-12 bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-400 shrink-0">No Img</div>
+                            )}
 
-          {/* Mobile Grid */}
-          <div className="md:hidden grid grid-cols-1 gap-4">
-            {filteredProducts.map(product => (
-              <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex gap-4">
-                {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} className="w-20 h-20 object-cover rounded-lg border border-gray-200 shrink-0" />
-                ) : (
-                  <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 shrink-0">No Img</div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                  <div className="text-sm text-gray-500 mb-1">{product.category?.name}</div>
-                  <div className="font-medium text-gray-900 mb-2">{formatPrice(product.price)}</div>
-                  <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium ${
-                      product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {product.in_stock ? 'In Stock' : 'Out of Stock'}
-                    </span>
-                    <div className="flex gap-1">
-                      <button onClick={() => handleEdit(product)} className="p-1.5 text-gray-400 hover:text-[#3b82f6]">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(product.id)} className="p-1.5 text-gray-400 hover:text-red-500">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
+                              <div className="text-sm text-gray-500">{product.category?.name || '-'}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-1/2">
+                            <div className="font-medium text-gray-900">{formatPrice(product.price)}</div>
+                            
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium shrink-0 ${
+                              product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                            </span>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button onClick={() => handleEdit(product)} className="p-2 text-gray-400 hover:text-[#3b82f6] rounded-lg hover:bg-blue-50 transition-colors">
+                                <Edit2 size={18} />
+                              </button>
+                              <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors">
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </ul>
               </div>
-            ))}
-          </div>
-        </>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
 
       {isFormOpen && (

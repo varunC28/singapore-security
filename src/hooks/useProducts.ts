@@ -30,6 +30,7 @@ export function useProducts(options: UseProductsOptions = {}) {
       let query = supabase
         .from('products')
         .select('*, category:categories(id, name, slug)')
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (options.categoryId) {
