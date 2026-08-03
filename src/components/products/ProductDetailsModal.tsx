@@ -97,7 +97,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
             onClose();
           }
         }}
-        className="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
+        className="relative bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
       >
         {/* Mobile Drag Handle */}
         <div 
@@ -110,7 +110,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         {/* Floating Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur shadow-md hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-900 transition-all border border-gray-200 hidden md:block"
+          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur shadow-md hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-900 transition-all border border-gray-200"
         >
           <X size={20} />
         </button>
