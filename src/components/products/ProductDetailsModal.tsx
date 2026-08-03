@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X, ChevronDown } from 'lucide-react';
 import type { Product } from '@/types';
 import { formatPrice } from '@/lib/constants';
@@ -47,6 +47,7 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
 
 export default function ProductDetailsModal({ product, onClose }: ProductDetailsModalProps) {
   const addItem = useCartStore((state) => state.addItem);
+  const dragControls = useDragControls();
   
   const quantity = useCartStore((state) => state.items.find(i => i.product_id === product.id)?.quantity || 0);
   const inCart = quantity > 0;
@@ -71,7 +72,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
       {/* Blurred Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -86,18 +87,36 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.5 }}
+        onDragEnd={(e, info) => {
+          if (info.offset.y > 100 || info.velocity.y > 500) {
+            onClose();
+          }
+        }}
+        className="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
       >
+        {/* Mobile Drag Handle */}
+        <div 
+          className="w-full flex justify-center pt-4 pb-2 md:hidden sticky top-0 bg-white/80 backdrop-blur z-50 touch-none cursor-grab"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        </div>
+
         {/* Floating Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur shadow-md hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-900 transition-all border border-gray-200"
+          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur shadow-md hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-900 transition-all border border-gray-200 hidden md:block"
         >
           <X size={20} />
         </button>
 
         {/* Left Side: Image */}
-        <div className="w-full md:w-2/5 bg-gray-50 flex flex-col p-8 border-r border-gray-100 shrink-0">
+        <div className="w-full md:w-2/5 bg-gray-50 flex flex-col p-8 pt-4 md:pt-8 border-r border-gray-100 shrink-0">
           <div className="aspect-square w-full relative mb-6">
             {product.image_url ? (
               <img
@@ -113,7 +132,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
           </div>
 
           <div className="mt-auto space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 leading-tight pr-8 md:pr-0">
+            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
               {product.name}
             </h2>
             <div>
@@ -163,7 +182,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
 
         {/* Right Side: Details Accordion */}
         <div className="w-full md:w-3/5 md:overflow-y-auto bg-white flex flex-col">
-          <div className="p-6 flex-1 pt-12 md:pt-6">
+          <div className="p-6 flex-1 pt-8 md:pt-6">
             <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
               <h3 className="text-lg font-bold text-gray-900">Product information</h3>
             </div>
