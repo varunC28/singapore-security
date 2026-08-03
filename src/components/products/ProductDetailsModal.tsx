@@ -63,11 +63,20 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
     }
   };
 
-  // Prevent background scrolling when modal is open
+  // Prevent background scrolling when modal is open (with strict iOS Safari fix)
   useEffect(() => {
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
+
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -97,7 +106,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
             onClose();
           }
         }}
-        className="relative bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
+        className="relative bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl min-h-[100dvh] h-[100dvh] sm:min-h-0 sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto overscroll-none md:overflow-hidden flex flex-col md:flex-row z-10"
       >
         {/* Mobile Drag Handle */}
         <div 
@@ -181,7 +190,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         </div>
 
         {/* Right Side: Details Accordion */}
-        <div className="w-full md:w-3/5 md:overflow-y-auto bg-white flex flex-col">
+        <div className="w-full md:w-3/5 md:overflow-y-auto bg-white flex flex-col flex-1">
           <div className="p-6 flex-1 pt-8 md:pt-6">
             <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
               <h3 className="text-lg font-bold text-gray-900">Product information</h3>
