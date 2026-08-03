@@ -97,7 +97,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
             onClose();
           }
         }}
-        className="relative bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
+        className="relative bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row z-10"
       >
         {/* Mobile Drag Handle */}
         <div 
