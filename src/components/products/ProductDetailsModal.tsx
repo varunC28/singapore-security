@@ -82,7 +82,7 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
 
-      {/* Modal Content */}
+      {/* Layer 2: Modal Shell (The Solid Wall) */}
       <motion.div
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -97,11 +97,11 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
             onClose();
           }
         }}
-        className="relative bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-y-auto overscroll-none md:overflow-hidden flex flex-col md:flex-row z-10"
+        className="absolute inset-0 sm:relative bg-white sm:rounded-2xl shadow-2xl w-full sm:max-w-4xl sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col z-10"
       >
-        {/* Mobile Drag Handle */}
+        {/* Mobile Drag Handle (Fixed at top of shell) */}
         <div 
-          className="w-full flex justify-center pt-4 pb-2 md:hidden sticky top-0 bg-white/80 backdrop-blur z-50 touch-none cursor-grab"
+          className="w-full flex justify-center pt-4 pb-2 md:hidden bg-white z-50 touch-none cursor-grab shrink-0 border-b border-gray-100"
           onPointerDown={(e) => dragControls.start(e)}
         >
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
@@ -110,119 +110,122 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         {/* Floating Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur shadow-md hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-900 transition-all border border-gray-200"
+          className="absolute top-4 sm:top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur shadow-md hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-900 transition-all border border-gray-200"
         >
           <X size={20} />
         </button>
 
-        {/* Left Side: Image */}
-        <div className="w-full md:w-2/5 bg-gray-50 flex flex-col p-8 pt-4 md:pt-8 border-r border-gray-100 shrink-0">
-          <div className="aspect-square w-full relative mb-6">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-full object-contain mix-blend-multiply"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-200 rounded-xl flex items-center justify-center">
-                <span className="text-gray-400">No image</span>
+        {/* Layer 3: Inner Scrollable Content */}
+        <div className="flex-1 w-full overflow-y-auto overscroll-none flex flex-col md:flex-row relative bg-white">
+          {/* Left Side: Image */}
+          <div className="w-full md:w-2/5 bg-gray-50 flex flex-col p-8 pt-6 md:pt-8 border-r border-gray-100 shrink-0">
+            <div className="aspect-square w-full relative mb-6">
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-full object-contain mix-blend-multiply"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400">No image</span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-auto space-y-4">
+              <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+                {product.name}
+              </h2>
+              <div>
+                {product.mrp && product.mrp > product.price ? (
+                  <div className="mb-2">
+                    <div className="flex items-end gap-3 mb-1">
+                      <span className="text-red-600 font-semibold text-3xl leading-none">-{Math.round(((product.mrp - product.price) / product.mrp) * 100)}%</span>
+                      <span className="text-gray-900 font-extrabold text-4xl leading-none">{formatPrice(product.price)}</span>
+                    </div>
+                    <div className="text-gray-600 font-medium text-sm">
+                      M.R.P.: <span className="line-through">{formatPrice(product.mrp)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-3xl font-extrabold text-gray-900 mb-2">
+                    {formatPrice(product.price)}
+                  </div>
+                )}
+                <div className="text-sm font-semibold text-gray-800">
+                  Inclusive of all taxes
+                </div>
               </div>
-            )}
+
+              <div className="h-[48px] mt-4">
+                {!product.in_stock ? (
+                  <button
+                    disabled
+                    className="w-full h-full rounded-xl bg-gray-100 text-gray-400 cursor-not-allowed font-medium border border-gray-200"
+                  >
+                    Out of Stock
+                  </button>
+                ) : inCart ? (
+                  <div className="bg-gray-900 rounded-3xl h-full flex items-center justify-center">
+                    <QuantityStepper productId={product.id} quantity={quantity} />
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full h-full rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm"
+                  >
+                    Add to Cart
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="mt-auto space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
-              {product.name}
-            </h2>
-            <div>
-              {product.mrp && product.mrp > product.price ? (
-                <div className="mb-2">
-                  <div className="flex items-end gap-3 mb-1">
-                    <span className="text-red-600 font-semibold text-3xl leading-none">-{Math.round(((product.mrp - product.price) / product.mrp) * 100)}%</span>
-                    <span className="text-gray-900 font-extrabold text-4xl leading-none">{formatPrice(product.price)}</span>
-                  </div>
-                  <div className="text-gray-600 font-medium text-sm">
-                    M.R.P.: <span className="line-through">{formatPrice(product.mrp)}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-3xl font-extrabold text-gray-900 mb-2">
-                  {formatPrice(product.price)}
-                </div>
-              )}
-              <div className="text-sm font-semibold text-gray-800">
-                Inclusive of all taxes
+          {/* Right Side: Details Accordion */}
+          <div className="w-full md:w-3/5 bg-white flex flex-col flex-1 pb-12 sm:pb-0">
+            <div className="p-6 flex-1 pt-8 md:pt-6">
+              <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
+                <h3 className="text-lg font-bold text-gray-900">Product information</h3>
               </div>
-            </div>
 
-            <div className="h-[48px] mt-4">
-              {!product.in_stock ? (
-                <button
-                  disabled
-                  className="w-full h-full rounded-xl bg-gray-100 text-gray-400 cursor-not-allowed font-medium border border-gray-200"
-                >
-                  Out of Stock
-                </button>
-              ) : inCart ? (
-                <div className="bg-gray-900 rounded-3xl h-full flex items-center justify-center">
-                  <QuantityStepper productId={product.id} quantity={quantity} />
-                </div>
-              ) : (
-                <button
-                  onClick={handleAddToCart}
-                  className="w-full h-full rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm"
-                >
-                  Add to Cart
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                {product.description && (
+                  <Accordion title="Description" defaultOpen={true}>
+                    <p className="text-gray-600 whitespace-pre-line text-sm leading-relaxed">
+                      {product.description}
+                    </p>
+                  </Accordion>
+                )}
 
-        {/* Right Side: Details Accordion */}
-        <div className="w-full md:w-3/5 md:overflow-y-auto bg-white flex flex-col flex-1">
-          <div className="p-6 flex-1 pt-8 md:pt-6">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
-              <h3 className="text-lg font-bold text-gray-900">Product information</h3>
-            </div>
+                {product.specs && product.specs.map((group, gIndex) => (
+                  <Accordion key={gIndex} title={group.group || 'Specifications'} defaultOpen={!product.description && gIndex === 0}>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm text-left">
+                        <tbody className="divide-y divide-gray-200">
+                          {group.items.map((spec, i) => (
+                            <tr key={i} className="even:bg-gray-50/50">
+                              <th className="px-4 py-3 font-semibold text-gray-700 bg-gray-50/80 w-1/3 align-top border-r border-gray-200">
+                                {spec.label}
+                              </th>
+                              <td className="px-4 py-3 text-gray-600 align-top">
+                                {spec.value}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Accordion>
+                ))}
 
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-              {product.description && (
-                <Accordion title="Description" defaultOpen={true}>
-                  <p className="text-gray-600 whitespace-pre-line text-sm leading-relaxed">
-                    {product.description}
-                  </p>
-                </Accordion>
-              )}
-
-              {product.specs && product.specs.map((group, gIndex) => (
-                <Accordion key={gIndex} title={group.group || 'Specifications'} defaultOpen={!product.description && gIndex === 0}>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <table className="w-full text-sm text-left">
-                      <tbody className="divide-y divide-gray-200">
-                        {group.items.map((spec, i) => (
-                          <tr key={i} className="even:bg-gray-50/50">
-                            <th className="px-4 py-3 font-semibold text-gray-700 bg-gray-50/80 w-1/3 align-top border-r border-gray-200">
-                              {spec.label}
-                            </th>
-                            <td className="px-4 py-3 text-gray-600 align-top">
-                              {spec.value}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                {/* Only show if empty */}
+                {!product.description && (!product.specs || product.specs.length === 0) && (
+                  <div className="p-8 text-center text-gray-500">
+                    No additional information available for this product.
                   </div>
-                </Accordion>
-              ))}
-
-              {/* Only show if empty */}
-              {!product.description && (!product.specs || product.specs.length === 0) && (
-                <div className="p-8 text-center text-gray-500">
-                  No additional information available for this product.
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
